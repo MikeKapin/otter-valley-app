@@ -43,19 +43,20 @@ function showToast(message, type = 'success') {
 }
 
 // --- Date helpers ---
+function toISO(s) { return s ? s.replace(' ', 'T') : s; }
 function fmtDate(iso) {
   if (!iso) return '';
-  const d = new Date(iso + (iso.includes('T') ? '' : 'T00:00:00'));
+  const d = new Date(toISO(iso));
   return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 function fmtTime(iso) {
   if (!iso) return '';
-  const d = new Date(iso + (iso.includes('T') ? '' : 'T00:00:00'));
+  const d = new Date(toISO(iso));
   return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 function fmtDuration(inTime, outTime) {
   if (!outTime) return '';
-  const mins = Math.round((new Date(outTime) - new Date(inTime)) / 60000);
+  const mins = Math.round((new Date(toISO(outTime)) - new Date(toISO(inTime))) / 60000);
   if (mins < 60) return mins + ' min';
   return Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm';
 }
