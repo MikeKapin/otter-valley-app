@@ -1,6 +1,5 @@
-const CACHE_NAME = 'ov-app-v1';
+const CACHE_NAME = 'ov-app-v2';
 const SHELL_ASSETS = [
-  '/',
   '/index.html',
   '/app.html',
   '/assets/style.css',
@@ -27,25 +26,25 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Network-first for API calls
-  if (url.pathname.startsWith('/api/')) {
+  // Let navigation requests go straight to network (avoids redirect issues)
+  if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() =>
-        new Response(JSON.stringify({ error: 'Offline' }), {
-          status: 503,
-          headers: { 'Content-Type': 'application/json' },
-        })
-      )
+      fetch(event.request).catch(() => caches.match('/app.html'))
     );
     return;
   }
 
-  // Cache-first for app shell
+  // Network-first for API calls
+  if (url.pathname.startsWith('/api/') || url.hostname !== self.location.hostname) {
+    return;
+  }
+
+  // Cache-first for static assets
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
       return fetch(event.request).then((response) => {
-        if (response.ok && response.type === 'basic') {
+        if (response.ok && !response.redirected && response.type === 'basic') {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
