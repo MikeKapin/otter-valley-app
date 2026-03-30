@@ -1,6 +1,6 @@
 // === Otter Valley R&G Club — Member App ===
 
-const API = '/api';
+const API = 'https://otter-valley-app.mikekapin139.workers.dev/api';
 const RANGES = {
   rifle: { name: 'Rifle Range', icon: '🎯' },
   'outdoor-pistol': { name: 'Outdoor Pistol Range', icon: '🔫' },

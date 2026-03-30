@@ -1,7 +1,7 @@
 // === Admin Dashboard ===
 // Security note: All user-generated text is escaped via esc() before rendering.
 // The innerHTML usage here renders only trusted template strings with escaped values.
-const API = '/api';
+const API = 'https://otter-valley-app.mikekapin139.workers.dev/api';
 const RANGES = {
   rifle: 'Rifle Range', 'outdoor-pistol': 'Outdoor Pistol Range',
   'indoor-pistol': 'Indoor Pistol Range', archery: 'Archery Range',
