@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#3e2723">
+  <title>Otter Valley Rod &amp; Gun Club</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+  <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-logo">
+      <h1>Otter Valley<br>Rod &amp; Gun Club</h1>
+      <p class="subtitle">Member Sign-In</p>
+    </div>
+
+    <div class="tabs" style="width:100%">
+      <button class="tab active" data-tab="login">Login</button>
+      <button class="tab" data-tab="register">Register</button>
+    </div>
+
+    <!-- Login Form -->
+    <form id="login-form" style="width:100%">
+      <div class="form-group">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-gold btn-block" id="login-btn">Sign In</button>
+      <p class="text-center text-dim text-sm mt-2">Forgot password? Contact <a href="mailto:ovrag@hotmail.com">ovrag@hotmail.com</a></p>
+    </form>
+
+    <!-- Register Form -->
+    <form id="register-form" class="hidden" style="width:100%">
+      <div class="form-group">
+        <label for="reg-first">First Name</label>
+        <input type="text" id="reg-first" required autocomplete="given-name">
+      </div>
+      <div class="form-group">
+        <label for="reg-last">Last Name</label>
+        <input type="text" id="reg-last" required autocomplete="family-name">
+      </div>
+      <div class="form-group">
+        <label for="reg-email">Email</label>
+        <input type="email" id="reg-email" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label for="reg-password">Password</label>
+        <input type="password" id="reg-password" required minlength="6" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label for="reg-confirm">Confirm Password</label>
+        <input type="password" id="reg-confirm" required minlength="6" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label for="reg-membership">Membership # <span class="text-dim">(optional)</span></label>
+        <input type="text" id="reg-membership" autocomplete="off">
+      </div>
+      <button type="submit" class="btn btn-gold btn-block" id="reg-btn">Create Account</button>
+    </form>
+
+    <div id="error-msg" class="text-red text-center text-sm mt-2 hidden"></div>
+
+    <p class="text-center text-dim text-sm mt-3">
+      Add this app to your home screen for quick access
+    </p>
+  </div>
+
+  <script>
+    const API = '/api';
+
+    // Auto-redirect if already logged in
+    const token = localStorage.getItem('ov_token');
+    if (token) {
+      fetch(API + '/auth/me', { headers: { Authorization: 'Bearer ' + token } })
+        .then(r => { if (r.ok) window.location.href = '/app.html'; })
+        .catch(() => {});
+    }
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const target = tab.dataset.tab;
+        document.getElementById('login-form').classList.toggle('hidden', target !== 'login');
+        document.getElementById('register-form').classList.toggle('hidden', target !== 'register');
+        document.getElementById('error-msg').classList.add('hidden');
+      });
+    });
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    // Login
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('login-btn');
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+      document.getElementById('error-msg').classList.add('hidden');
+
+      try {
+        const res = await fetch(API + '/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('login-email').value,
+            password: document.getElementById('login-password').value,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Login failed');
+        localStorage.setItem('ov_token', data.token);
+        localStorage.setItem('ov_member', JSON.stringify(data.member));
+        window.location.href = '/app.html';
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    });
+
+    // Register
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('reg-btn');
+      const pw = document.getElementById('reg-password').value;
+      const confirm = document.getElementById('reg-confirm').value;
+
+      if (pw !== confirm) { showError('Passwords do not match'); return; }
+      if (pw.length < 6) { showError('Password must be at least 6 characters'); return; }
+
+      btn.disabled = true;
+      btn.textContent = 'Creating account...';
+      document.getElementById('error-msg').classList.add('hidden');
+
+      try {
+        const res = await fetch(API + '/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            first_name: document.getElementById('reg-first').value,
+            last_name: document.getElementById('reg-last').value,
+            email: document.getElementById('reg-email').value,
+            password: pw,
+            membership_number: document.getElementById('reg-membership').value || undefined,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Registration failed');
+        localStorage.setItem('ov_token', data.token);
+        localStorage.setItem('ov_member', JSON.stringify(data.member));
+        window.location.href = '/app.html';
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
+      }
+    });
+  </script>
+</body>
+</html>
