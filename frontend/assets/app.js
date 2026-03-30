@@ -68,6 +68,9 @@ function esc(str) {
   return div.innerHTML;
 }
 
+// --- QR Scanner state ---
+let qrScanner = null;
+
 // --- Router ---
 const page = document.getElementById('page-content');
 
@@ -85,6 +88,9 @@ function setPage(html) {
 }
 
 function navigate() {
+  // Stop scanner if running when navigating away
+  if (typeof stopScanner === 'function' && qrScanner) stopScanner();
+
   const { route, params } = getRoute();
   document.querySelectorAll('.bottom-nav a').forEach(a => {
     const nav = a.dataset.nav;
@@ -126,7 +132,7 @@ async function renderHome() {
       + '<p>' + esc(r.icon) + ' You\'re at <strong>' + esc(r.name) + '</strong> since ' + esc(fmtTime(currentVisit.signed_in_at)) + '</p>'
       + '<button class="btn btn-outline btn-block mt-1" onclick="doCheckout()">Sign Out</button></div>';
   } else {
-    html += '<a href="#checkin" class="btn btn-gold btn-block mt-2" style="font-size:1.1rem;padding:1rem">&#9989; Sign In to Range</a>';
+    html += '<a href="#checkin" class="btn btn-gold btn-block mt-2" style="font-size:1.1rem;padding:1rem">📷 Scan to Sign In</a>';
   }
 
   html += '<h3 class="mt-3 mb-1">Range Status</h3><div class="range-grid">';
@@ -180,13 +186,79 @@ async function renderCheckin(params) {
 
   if (rangeParam && RANGES[rangeParam]) { showConfirmation(rangeParam, source); return; }
 
-  let html = '<h2 class="mt-2 mb-1">Sign In to Range</h2><p class="text-dim mb-2">Select your range</p><div class="range-grid">';
+  let html = '<h2 class="mt-2 mb-1">Sign In to Range</h2>'
+    + '<button class="btn btn-gold btn-block" style="font-size:1.1rem;padding:1rem" onclick="startScanner()">📷 Scan Range QR Code</button>'
+    + '<div id="scanner-box" class="hidden"><div class="scanner-container"><div id="qr-reader"></div></div>'
+    + '<button class="btn btn-outline btn-block mt-1" onclick="stopScanner()">Cancel Scan</button></div>'
+    + '<div class="scan-or">or choose manually</div>'
+    + '<div class="range-grid">';
   for (const [id, info] of Object.entries(RANGES)) {
     html += '<div class="range-card" onclick="selectRange(\'' + id + '\')">'
       + '<span class="range-icon">' + info.icon + '</span><span class="range-name">' + esc(info.name) + '</span></div>';
   }
   html += '</div>';
   setPage(html);
+}
+
+// --- QR Scanner ---
+
+window.startScanner = function() {
+  const box = document.getElementById('scanner-box');
+  if (!box) return;
+  box.classList.remove('hidden');
+
+  if (typeof Html5Qrcode === 'undefined') {
+    showToast('Scanner not available', 'error');
+    return;
+  }
+
+  qrScanner = new Html5Qrcode('qr-reader');
+  qrScanner.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: { width: 250, height: 250 } },
+    (decodedText) => {
+      stopScanner();
+      handleScannedCode(decodedText);
+    },
+    () => {}
+  ).catch((err) => {
+    console.error('Scanner error:', err);
+    showToast('Could not access camera. Use manual selection below.', 'error');
+    box.classList.add('hidden');
+  });
+};
+
+window.stopScanner = function() {
+  const box = document.getElementById('scanner-box');
+  if (box) box.classList.add('hidden');
+  if (qrScanner) {
+    qrScanner.stop().catch(() => {});
+    qrScanner.clear();
+    qrScanner = null;
+  }
+};
+
+function handleScannedCode(text) {
+  // Parse range from URL: ...#checkin?range=rifle or ...?range=rifle
+  let rangeId = null;
+  try {
+    const url = new URL(text);
+    rangeId = url.searchParams.get('range');
+    if (!rangeId && url.hash) {
+      const hashParams = new URLSearchParams(url.hash.split('?')[1] || '');
+      rangeId = hashParams.get('range');
+    }
+  } catch (e) {
+    // Try plain query string
+    const match = text.match(/range=([\w-]+)/);
+    if (match) rangeId = match[1];
+  }
+
+  if (rangeId && RANGES[rangeId]) {
+    showConfirmation(rangeId, 'qr');
+  } else {
+    showToast('Unrecognized QR code. Use manual selection.', 'error');
+  }
 }
 
 window.selectRange = function(id) { showConfirmation(id, 'manual'); };
