@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#3e2723">
+  <title>OV R&G Club</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+  <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+  <div class="offline-banner">You're offline — sign-ins will sync when connected</div>
+
+  <div class="app-container">
+    <header class="page-header">
+      <span class="logo">OV R&G</span>
+      <span class="user-info" id="user-greeting"></span>
+    </header>
+    <main id="page-content">
+      <div class="loading-overlay"><div class="spinner"></div></div>
+    </main>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <nav class="bottom-nav">
+    <a href="#home" data-nav="home">
+      <span class="nav-icon">&#127968;</span>Home
+    </a>
+    <a href="#checkin" data-nav="checkin">
+      <span class="nav-icon">&#9989;</span>Sign In
+    </a>
+    <a href="#visits" data-nav="visits">
+      <span class="nav-icon">&#128203;</span>Visits
+    </a>
+    <a href="#rules" data-nav="rules">
+      <span class="nav-icon">&#128214;</span>Rules
+    </a>
+    <a href="#more" data-nav="more">
+      <span class="nav-icon">&#8943;</span>More
+    </a>
+  </nav>
+
+  <script src="/assets/app.js"></script>
+</body>
+</html>
