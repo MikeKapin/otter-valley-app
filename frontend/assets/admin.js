@@ -175,6 +175,7 @@ window.updateRange = async function(id) {
   try {
     await adminApi('/admin/ranges/' + id, { method: 'PUT', body: JSON.stringify({ status, note }) });
     showToast(RANGES[id] + ' updated');
+    await loadRanges();
   } catch (e) { showToast(e.message, 'error'); }
 };
 
