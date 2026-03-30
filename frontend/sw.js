@@ -1,9 +1,10 @@
-const CACHE_NAME = 'ov-app-v2';
+const CACHE_NAME = 'ov-app-v3';
 const SHELL_ASSETS = [
   '/index.html',
   '/app.html',
   '/assets/style.css',
   '/assets/app.js',
+  '/assets/html5-qrcode.min.js',
   '/manifest.json',
 ];
 

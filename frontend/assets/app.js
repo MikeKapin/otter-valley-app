@@ -212,19 +212,24 @@ window.startScanner = function() {
     return;
   }
 
-  qrScanner = new Html5Qrcode('qr-reader');
-  qrScanner.start(
-    { facingMode: 'environment' },
-    { fps: 10, qrbox: { width: 250, height: 250 } },
-    (decodedText) => {
-      stopScanner();
-      handleScannedCode(decodedText);
-    },
-    () => {}
-  ).catch((err) => {
-    console.error('Scanner error:', err);
-    showToast('Could not access camera. Use manual selection below.', 'error');
-    box.classList.add('hidden');
+  // Wait for layout reflow so #qr-reader has dimensions
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      qrScanner = new Html5Qrcode('qr-reader');
+      qrScanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+          stopScanner();
+          handleScannedCode(decodedText);
+        },
+        () => {}
+      ).catch((err) => {
+        console.error('Scanner error:', err);
+        showToast('Could not access camera. Use manual selection below.', 'error');
+        box.classList.add('hidden');
+      });
+    });
   });
 };
 
