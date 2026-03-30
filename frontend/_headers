@@ -1,0 +1,10 @@
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+
+/manifest.json
+  Content-Type: application/json
+
+/sw.js
+  Content-Type: application/javascript
+  Cache-Control: no-cache
